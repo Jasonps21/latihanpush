@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="manifest" href="/manifest.json">
+    <title>Push Notification</title>
+</head>
+
+<body>
+    <script type="text/javascript">
+        // Periksa service worker
+        if (!('serviceWorker' in navigator)) {
+            console.log("Service worker tidak didukung browser ini.");
+        } else {
+            registerServiceWorker();
+            requestPermission();
+        }
+        // Register service worker
+        function registerServiceWorker() {
+            return navigator.serviceWorker.register('sw.js')
+                .then(function(registration) {
+                    console.log('Registrasi service worker berhasil.');
+                    return registration;
+                })
+                .catch(function(err) {
+                    console.error('Registrasi service worker gagal.', err);
+                });
+        }
+
+        function requestPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(function(result) {
+                    if (result === "denied") {
+                        console.log("Fitur notifikasi tidak diijinkan.");
+                        return;
+                    } else if (result === "default") {
+                        console.error("Pengguna menutup kotak dialog permintaan ijin.");
+                        return;
+                    }
+
+                    if (('PushManager' in window)) {
+                        navigator.serviceWorker.getRegistration().then(function(reg) {
+                            reg.pushManager.subscribe({
+                                userVisibleOnly: true,
+                                applicationServerKey: urlBase64ToUint8Array("AAAAVfXWkxI:APA91bFt2v3Y7gRfVIAAJfGvq3rypvPwj0JWa6mTYwc-4QkEpB18LuDmBbUhhv16Hm1Ihswo5-1qoKY6-pMNzzG2uIyK6VkL3ep4UE0IZLxNNG5Vvg3YqSkSfgkePf9JJ944juCmegEr")
+                            }).then(function(sub) {
+                                console.log('Berhasil melakukan subscribe dengan endpoint: ', sub.endpoint);
+                            }).catch(function(e) {
+                                console.error('Tidak dapat melakukan subscribe ', e);
+                            });
+                        });
+                    }
+                });
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            var padding = '='.repeat((4 - base64String.length % 4) % 4);
+            var base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+
+            console.log(base64);
+            var rawData = atob(base64);
+            var outputArray = new Uint8Array(rawData.length);
+
+            for (var i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+    </script>
+</body>
+
+</html>
